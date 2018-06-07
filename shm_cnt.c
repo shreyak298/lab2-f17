@@ -10,9 +10,9 @@ struct shm_cnt {
 
 int main(int argc, char *argv[])
 {
-int pid;
-int i=0;
-struct shm_cnt *counter;
+  int pid;
+  int i=0;
+  struct shm_cnt *counter;
   pid=fork();
   sleep(1);
 
