@@ -35,22 +35,23 @@ int shm_open(int id, char **pointer) {//CS153  adds ID and pointer to id into ta
 
 //you write this
 	int i;
-	acquire(&(shm_table.lock));
-	for(i = 0; i < SHM_TABLE_SIZE; ++i){
-	   if(shm_table.shm_pages[i].id == id){
-	      if(mappages(myproc()->pg_dir,(void *)PGROUNDUP(myproc()->sz), PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W|PTE_U);
-	         release(&(shm_table.lock));
-	         return -1;
-	      }
-	      shm_table.shm_pages[i].refcnt += 1;
-	      *pointer = (char *)PGROUNDUP(myproc()->sz);
-	      myproc()->sz += PGSIZE;
-	      release(&(shm_table.lock));
-	      return 0;
-	   }
-	}
+    acquire(&(shm_table.lock));
+    for (i = 0; i< SHM_TABLE_SIZE; i++) {
+        if (shm_table.shm_pages[i].id == id) {
+            if (mappages(myproc()->pgdir, (char *)PGROUNDUP(myproc()->sz), PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W|PTE_U) == -1) {
+	        release(&(shm_table.lock));
+	        return -1;
+	    }
+
+            shm_table.shm_pages[i].refcnt += 1;
+            *pointer = (char *)PGROUNDUP(myproc()->sz);
+            myproc()->sz += PGSIZE;
+            release(&(shm_table.lock)); 
+            return 0;
+        }
+    }
 	
-	for (i = 0; i< SHM_TABLE_SIZE; i++) {
+    for (i = 0; i< SHM_TABLE_SIZE; i++) {
         if (shm_table.shm_pages[i].id == 0) {
             shm_table.shm_pages[i].id = id;
             if ((shm_table.shm_pages[i].frame = kalloc()) == 0) {
