@@ -7,7 +7,7 @@
 #include "proc.h"
 #include "spinlock.h"
 
-const uint SHM_TABLE_SIZE = 64;
+const uint SHM_TABLE_SIZE = 64;//cs153 Initialize table size
 
 struct {
   struct spinlock lock;
@@ -30,7 +30,8 @@ void shminit() {
   release(&(shm_table.lock));
 }
 
-int shm_open(int id, char **pointer) {
+int shm_open(int id, char **pointer) {//CS153  adds ID and pointer to id into table, if it is not already there
+
 
 //you write this
 	int i;
@@ -77,7 +78,8 @@ int shm_open(int id, char **pointer) {
     return -1; //added to remove compiler warning -- you should decide what to return
 }
 
-int shm_close(int id) {
+int shm_close(int id) {//Looks for shared memory segment in shm table 
+//CS153
 //you write this too!
 	int i;
 	acquire(&(shm_table.lock));

@@ -23,6 +23,7 @@ int main(int argc, char *argv[])
 shm_open(1,(char **)&counter);
  
 //  printf(1,"%s returned successfully from shm_open with counter %x\n", pid? "Child": "Parent", counter); 
+  //CS153
   for(i = 0; i < 10000; i++)
     {
      uacquire(&(counter->lock));
