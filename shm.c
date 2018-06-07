@@ -15,7 +15,7 @@ struct {
     uint id;
     char *frame;
     int refcnt;
-  } shm_pages[SHM_TABLE_SIZE];
+  } shm_pages[64];
 } shm_table;
 
 void shminit() {
@@ -33,10 +33,14 @@ void shminit() {
 int shm_open(int id, char **pointer) {
 
 //you write this
+	int i;
 	acquire(&(shm_table.lock));
 	for(i = 0; i < SHM_TABLE_SIZE; ++i){
 	   if(shm_table.shm_pages[i].id == id){
-	      mappages(myproc()->pg_dir, PGROUNDUP(myproc()->sz), PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W|PTE_u);
+	      if(mappages(myproc()->pg_dir,(void *)PGROUNDUP(myproc()->sz), PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W|PTE_U);
+	         release(&(shm_table.lock));
+	         return -1;
+	      }
 	      shm_table.shm_pages[i].refcnt += 1;
 	      *pointer = (char *)PGROUNDUP(myproc()->sz);
 	      myproc()->sz += PGSIZE;
@@ -48,9 +52,16 @@ int shm_open(int id, char **pointer) {
 	for(i = 0; i < SHM_TABLE_SIZE; ++i){
 	   if(shm_table.shm_pages[i].id == 0){
 	      shm_table.shm_pages[i].id = id;
-	      shm_table.shm_pages[i].frame = kmalloc(PGSIZE, );
+	      shm_table.shm_pages[i].frame = kalloc();
 	      shm_table.shm_pages[i].refcnt = 1;
+	      if(mappages(myproc()->pgdir, (void *)PGROUNDUP(myproc()->sz), PGSIZE, V2P(shm_table.shm_pages[i].frame), PTE_W|PTE_U)== -1){
+	         release(&(shm_table.lock));
+	         release -1;
 	   }
+	      *pointer = (char *)PGROUNDUP(myproc()->sz);
+	      myproc()->sz += PGSIZE;
+	      release(&(shm_table.lock));
+	      return 0;
 	}
 
 	release(&(shm_table.lock));
@@ -59,11 +70,27 @@ int shm_open(int id, char **pointer) {
 
 
 
-	return 0; //added to remove compiler warning -- you should decide what to return
+	return -1; //added to remove compiler warning -- you should decide what to return
 }
 
 
 int shm_close(int id) {
 //you write this too!
-	return 0; //added to remove compiler warning -- you should decide what to return
+	int i;
+	acquire(&(shm_table.lock));
+	for(i = 0; i < SHM_TABLE_SIZE; ++i){
+	   if(shm_table.shm_pages[i].id == id){
+	      shm_table.shm_pages[i].refcnt -= 1;
+	      if(shm_table.shm_pages[i].refcnt <= 0){
+	         shm_table.shm_pages[i].id = 0;
+	         shm_table.shm_pages[i].frame = 0;
+		 shm_table.shm_pages[i].refcnt = 0;
+	      }
+	      release(&(shm_table.lock));
+	      return 0;
+	   }
+	}
+
+        release(&(shm_table.lock));
+	return -1;
 }
